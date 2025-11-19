@@ -8,6 +8,8 @@ plugins {
 dependencies {
   implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
   implementation("com.google.firebase:firebase-analytics")
+    // Required for libraries that need Java 8+ APIs on older Android devices
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
 }
 
 android {
@@ -18,6 +20,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // Enable core library desugaring for Java 8+ API support on older devices
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {

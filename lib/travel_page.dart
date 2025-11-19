@@ -7,6 +7,8 @@ import 'function.dart';
 import 'vehicle_details_page.dart';
 import 'SmallFunctions/network_watcher.dart';
 
+int active = 1;
+
 class TravelPage extends StatefulWidget {
   const TravelPage({super.key});
   @override
@@ -22,32 +24,19 @@ class _TravelPageState extends State<TravelPage> {
     super.initState();
     _loadTravels();
     Special.syncNow(
-      1,
+      active,
       'Everthing is upto date',
       context,
       _loadTravels,
       mounted,
     );
+    active = 0;
     try {
       Special.loadImages();
     } catch (_) {
       // ignore network errors; types remain whatever was cached
     }
-    watcher = NetworkWatcher();
-
-    watcher.onOffline = () {
-      print("OFFLINE");
-    };
-
-    watcher.onBackOnline = () {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Network back online")));
-      Special.initSystem();
-      if (mounted) setState(() {});
-    };
-
-    watcher.start();
+    Special.networkReload(context, setState, mounted);
   }
 
   Future<void> _loadTravels() async {
@@ -100,61 +89,7 @@ class _TravelPageState extends State<TravelPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           (ApiService.newVersion > ApiService.Version)
-              ? Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Color.fromARGB(255, 158, 85, 2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "New Version Available",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-
-                      const SizedBox(height: 6),
-
-                      Text(
-                        "Version: ${ApiService.newVersionNo}",
-                        style: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-
-                      Text(
-                        "Feature: ${ApiService.feature}",
-                        style: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      SizedBox(
-                        width: 140,
-                        height: 40,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () => ApiService.urlOpen(),
-                          child: const Text(
-                            "Download",
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
+              ? Special.newUpdate()
               : Container(),
 
           const Padding(
@@ -214,146 +149,146 @@ class _TravelPageState extends State<TravelPage> {
                     itemCount: travels.length,
                     itemBuilder: (_, i) {
                       final t = travels[i];
-                      return Card(
-                        color: const Color(0xFF1A1A1A),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 3,
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: FutureBuilder(
-                                      future: ApiService.getTypeFile(
-                                        "TypeImage/${t['Image']}",
-                                      ),
-                                      builder: (context, snap) {
-                                        if (!snap.hasData) {
-                                          return Image.asset(
-                                            "assets/Others.png",
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () async {
+                          final file = await ApiService.getTypeFile(
+                            "TypeImage/${t['Image']}",
+                          );
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => VehicleDetailsPage(
+                                vehicleId: t['vehicle_id'],
+                                file: file,
+                              ),
+                            ),
+                          );
+                          _loadTravels();
+                          await Special.syncNow(
+                            0,
+                            "",
+                            context,
+                            _loadTravels,
+                            mounted,
+                          );
+                        },
+                        child: Card(
+                          color: const Color(0xFF1A1A1A),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 3,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: FutureBuilder(
+                                        future: ApiService.getTypeFile(
+                                          "TypeImage/${t['Image']}",
+                                        ),
+                                        builder: (context, snap) {
+                                          if (!snap.hasData) {
+                                            return Image.asset(
+                                              "assets/Others.png",
+                                              width: 130,
+                                              height: 130,
+                                              fit: BoxFit.cover,
+                                            );
+                                          }
+
+                                          return Image.file(
+                                            snap.data!,
                                             width: 130,
                                             height: 130,
                                             fit: BoxFit.cover,
                                           );
-                                        }
-
-                                        return Image.file(
-                                          snap.data!,
-                                          width: 130,
-                                          height: 130,
-                                          fit: BoxFit.cover,
-                                        );
-                                      },
+                                        },
+                                      ),
                                     ),
-                                  ),
 
-                                  const SizedBox(width: 14),
+                                    const SizedBox(width: 14),
 
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          t['vehicle_number'],
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-
-                                        Text(
-                                          t['Type'],
-                                          style: const TextStyle(
-                                            color: Colors.white38,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-
-                                        const SizedBox(height: 6),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              ((t['travel_from'] != "") &&
-                                                      (t['travel_to'] != ""))
-                                                  ? "${(t['travel_from'] == "") ? "---" : t['travel_from']} → ${(t['travel_to'] == "") ? "---" : t['travel_to']}"
-                                                  : "---",
-                                              style: const TextStyle(
-                                                color: Color(0xFFF5C544),
-                                                fontSize: 15,
-                                              ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            t['vehicle_number'],
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w700,
                                             ),
+                                          ),
 
-                                            const SizedBox(height: 12),
+                                          Text(
+                                            t['Type'],
+                                            style: const TextStyle(
+                                              color: Colors.white38,
+                                              fontSize: 13,
+                                            ),
+                                          ),
 
-                                            Row(
-                                              children: [
-                                                Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 12,
-                                                        vertical: 6,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color: Color(0xFFF5C544),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          10,
+                                          const SizedBox(height: 6),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                ((t['travel_from'] != "") &&
+                                                        (t['travel_to'] != ""))
+                                                    ? "${(t['travel_from'] == "") ? "---" : t['travel_from']} → ${(t['travel_to'] == "") ? "---" : t['travel_to']}"
+                                                    : "---",
+                                                style: const TextStyle(
+                                                  color: Color(0xFFF5C544),
+                                                  fontSize: 15,
+                                                ),
+                                              ),
+
+                                              const SizedBox(height: 12),
+
+                                              Row(
+                                                children: [
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 6,
                                                         ),
-                                                  ),
-                                                  child: Text(
-                                                    "₹${t['price']}",
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.black,
+                                                    decoration: BoxDecoration(
+                                                      color: Color(0xFFF5C544),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                    child: Text(
+                                                      "₹${t['price']}",
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.black,
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-
-                                        const SizedBox(height: 6),
-                                      ],
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () async {
-                                      final file = await ApiService.getTypeFile(
-                                        "TypeImage/${t['Image']}",
-                                      );
-                                      await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => VehicleDetailsPage(
-                                            vehicleId: t['vehicle_id'],
-                                            file: file,
+                                                ],
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                      );
-                                      _loadTravels();
-                                      await Special.syncNow(
-                                        0,
-                                        "",
-                                        context,
-                                        _loadTravels,
-                                        mounted,
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(50),
-                                    child: SizedBox(
+
+                                          const SizedBox(height: 6),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(
                                       width: 30,
                                       height: 120,
                                       child: const Icon(
@@ -361,22 +296,22 @@ class _TravelPageState extends State<TravelPage> {
                                         color: Color(0xFFF5C544),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    t['sync_status'],
-                                    style: const TextStyle(
-                                      color: Colors.white54,
-                                      fontSize: 10,
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      t['sync_status'],
+                                      style: const TextStyle(
+                                        color: Colors.white54,
+                                        fontSize: 10,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );

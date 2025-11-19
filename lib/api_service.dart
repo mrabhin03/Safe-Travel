@@ -4,29 +4,48 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'db_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   // TODO: set your server base URL
   static const base = 'https://aqua-hummingbird-953655.hostingersite.com/';
-  static const int Version = 41010;
-  static const String CVersionNo = "4.10.10";
+  static const int Version = 42300;
+  static const String CVersionNo = "4.23";
   static int newVersion = 0;
   static String newVersionNo = "";
   static String feature = "";
   static String url = "";
 
   static Future<void> isLatestVersion() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Load previous saved values (in case server fails)
+    newVersion = prefs.getInt('newVersion') ?? 0;
+    url = prefs.getString('url') ?? "";
+    newVersionNo = prefs.getString('newVersionNo') ?? "";
+    feature = prefs.getString('feature') ?? "";
+
     try {
       final res = await http.get(Uri.parse('$base/AppDetails.php'));
 
       if (res.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(res.body);
+
+        // Update variables
         newVersion = int.parse(data['Version']);
         url = data['url'];
         newVersionNo = data['VersionNum'];
         feature = data['Feature'];
+
+        // Save to local storage
+        await prefs.setInt('newVersion', newVersion);
+        await prefs.setString('url', url);
+        await prefs.setString('newVersionNo', newVersionNo);
+        await prefs.setString('feature', feature);
       }
-    } catch (e) {}
+    } catch (e) {
+      // No internet OR server error → using local stored values
+      print("Error fetching latest version. Loaded local cached data.");
+    }
   }
 
   static Future<void> urlOpen() async {

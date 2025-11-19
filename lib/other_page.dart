@@ -83,61 +83,7 @@ class _OtherPageState extends State<OtherPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           (ApiService.newVersion > ApiService.Version)
-              ? Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Color.fromARGB(255, 158, 85, 2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "New Version Available",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-
-                      const SizedBox(height: 6),
-
-                      Text(
-                        "Version: ${ApiService.newVersionNo}",
-                        style: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-
-                      Text(
-                        "Feature: ${ApiService.feature}",
-                        style: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      SizedBox(
-                        width: 140,
-                        height: 40,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () => ApiService.urlOpen(),
-                          child: const Text(
-                            "Download",
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
+              ? Special.newUpdate()
               : Container(),
 
           const Padding(
