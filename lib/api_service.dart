@@ -9,8 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
   // TODO: set your server base URL
   static const base = 'https://aqua-hummingbird-953655.hostingersite.com/';
-  static const int Version = 42300;
-  static const String CVersionNo = "4.23";
+  static const int Version = 42500;
+  static const String CVersionNo = "4.25";
   static int newVersion = 0;
   static String newVersionNo = "";
   static String feature = "";

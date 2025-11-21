@@ -5,6 +5,7 @@ import 'api_service.dart';
 import 'package:flutter/material.dart';
 import 'travel_page.dart';
 import 'other_page.dart';
+import 'login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'db_helper.dart';
 import 'SmallFunctions/network_watcher.dart';
@@ -254,9 +255,17 @@ class Special {
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text("Logout", style: TextStyle(color: Colors.red)),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                _signOut();
+                try {
+                  await FirebaseAuth.instance.signOut();
+                } catch (e) {
+                  print('Sign out failed: $e');
+                }
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                  (route) => false,
+                );
               },
             ),
             Padding(

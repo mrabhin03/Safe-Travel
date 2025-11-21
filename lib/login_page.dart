@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'signup_page.dart';
+import 'travel_page.dart';
 import 'reset_page.dart';
 import 'function.dart';
 
@@ -50,10 +51,21 @@ class _LoginPageState extends State<LoginPage> {
         email: email.text.trim(),
         password: password.text.trim(),
       );
+      // Navigate to home (TravelPage) after successful login and clear stack.
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const TravelPage()),
+          (route) => false,
+        );
+      }
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.message ?? 'Login failed')));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -72,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
 
       final GoogleSignInAccount? gUser = await GoogleSignIn().signIn();
       if (gUser == null) {
-        setState(() => loading = false);
+        if (mounted) setState(() => loading = false);
         return;
       }
 
@@ -83,6 +95,14 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(cred);
+
+      // Navigate to home after successful Google sign-in.
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const TravelPage()),
+          (route) => false,
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(
         context,

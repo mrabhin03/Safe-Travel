@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'login_page.dart';
 import 'travel_page.dart';
 import 'db_helper.dart';
@@ -16,9 +17,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 void main() async {
-  await Special.initSystem();
   WidgetsFlutterBinding.ensureInitialized();
-
+  FlutterNativeSplash.preserve(widgetsBinding: WidgetsBinding.instance);
+  await Special.initSystem();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await DBHelper.initDB();
@@ -77,7 +78,11 @@ class _AuthGateState extends State<AuthGate> {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-
+        try {
+          FlutterNativeSplash.remove();
+        } catch (e) {
+          print('FlutterNativeSplash.remove() failed: $e');
+        }
         if (snap.data == null) {
           return const LoginPage();
         }
@@ -92,12 +97,6 @@ class _AuthGateState extends State<AuthGate> {
 
 Future<void> _initializeAfterLaunch() async {
   try {
-    await Special.initSystem();
-  } catch (e, st) {
-    print('Error in Special.initSystem: $e\n$st');
-  }
-
-  try {
     // Initialize local notifications first so the plugin has a valid
     // small icon resource available before any .show() calls.
     await LocalNotificationService.initialize();
@@ -107,5 +106,7 @@ Future<void> _initializeAfterLaunch() async {
     await FCMService.printToken();
   } catch (e, st) {
     print('FCM initialization failed: $e\n$st');
+  } finally {
+    // Remove the native splash once initialization completes (or fails).
   }
 }
